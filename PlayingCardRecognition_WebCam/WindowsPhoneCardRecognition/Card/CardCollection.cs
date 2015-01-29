@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace WindowsPhoneCardRecognition
 {
-    internal class CardCollectionExtension
+    internal static class CardCollectionExtension
     {
         public static List<Bitmap> ToImageList(this List<Card> List)
         {

@@ -40,6 +40,7 @@ namespace PlayingCardRecognition
 
             //Load Templates From Resources , 
             //Templates will be used for template matching
+            
             j = PlayingCardRecognition.Properties.Resources.J;
             k = PlayingCardRecognition.Properties.Resources.K;
             q = PlayingCardRecognition.Properties.Resources.Q;

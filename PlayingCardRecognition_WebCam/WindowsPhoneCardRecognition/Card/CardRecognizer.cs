@@ -11,6 +11,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.UI.Xaml.Media.Imaging;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.IO;
+using Windows.Storage;
+using Windows.Storage.Streams;
 
 namespace WindowsPhoneCardRecognition
 {
@@ -23,7 +26,11 @@ namespace WindowsPhoneCardRecognition
         private Bitmap j, k, q; //Face Card Character Templates
         private Bitmap clubs, diamonds, spades, hearts; //Suit Templates
 
+        private bool resourceLoaded = false;
+
         private FiltersSequence commonSeq; //Commonly filter sequence to be used 
+
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -35,16 +42,48 @@ namespace WindowsPhoneCardRecognition
             commonSeq.Add(new BradleyLocalThresholding());
             commonSeq.Add(new DifferenceEdgeDetector());
 
-
+            
             //Load Templates From Resources , 
             //Templates will be used for template matching
-            j = PlayingCardRecognition.Properties.Resources.J;
-            k = PlayingCardRecognition.Properties.Resources.K;
-            q = PlayingCardRecognition.Properties.Resources.Q;
-            clubs = PlayingCardRecognition.Properties.Resources.Clubs;
-            diamonds = PlayingCardRecognition.Properties.Resources.Diamonds;
-            spades = PlayingCardRecognition.Properties.Resources.Spades;
-            hearts = PlayingCardRecognition.Properties.Resources.Hearts;
+
+            LoadResources();
+            
+            
+        }
+
+        private async void LoadResources()
+        {
+            j = (Bitmap)(await LoadImage("ms-appx:///Templates/J.bmp"));
+            k = (Bitmap)(await LoadImage("ms-appx:///Templates/K.bmp"));
+            q = (Bitmap)(await LoadImage("ms-appx:///Templates/Q.bmp"));
+            clubs = (Bitmap)(await LoadImage("ms-appx:///Templates/Clubs.bmp"));
+            diamonds = (Bitmap)(await LoadImage("ms-appx:///Templates/Diamonds.bmp"));
+            spades = (Bitmap)(await LoadImage("ms-appx:///Templates/Spades.bmp"));
+            hearts = (Bitmap)(await LoadImage("ms-appx:///Templates/Hearts.bmp"));
+
+            resourceLoaded = true;
+        }
+
+        private static async Task<WriteableBitmap> LoadImage(string filePath)
+        {
+            WriteableBitmap writeableBitmap=null;
+
+            StorageFile storageFile =
+                 await StorageFile.GetFileFromApplicationUriAsync(new Uri(filePath));
+            using (IRandomAccessStream fileStream = await storageFile.OpenAsync(FileAccessMode.Read))
+            {
+                BitmapImage bitmapImage = new BitmapImage();
+                await bitmapImage.SetSourceAsync(fileStream);
+
+                writeableBitmap =
+                    new WriteableBitmap(bitmapImage.PixelWidth, bitmapImage.PixelHeight);
+                fileStream.Seek(0);
+                await writeableBitmap.SetSourceAsync(fileStream);
+
+                
+            }
+
+            return writeableBitmap;
         }
 
         /// <summary>
