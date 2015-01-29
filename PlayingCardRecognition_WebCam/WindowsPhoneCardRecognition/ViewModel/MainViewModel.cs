@@ -9,6 +9,10 @@ using Lumia.Imaging.Artistic;
 using GalaSoft.MvvmLight.Command;
 using System.ComponentModel;
 using Lumia.Imaging.Adjustments;
+using System.Diagnostics;
+using Windows.Devices.Enumeration;
+using System.Linq;
+using Windows.UI.Popups;
 
 namespace WindowsPhoneCardRecognition.ViewModel
 {
@@ -92,6 +96,7 @@ namespace WindowsPhoneCardRecognition.ViewModel
                     _writeableBitmap = value;
 
                     RaisePropertyChanged("PreviewBitmap");
+                    Debug.WriteLine("WriteableBitmap Changed");
                 }
             }
         }
@@ -100,7 +105,100 @@ namespace WindowsPhoneCardRecognition.ViewModel
 
         public MainViewModel()
         {
-            
+            DetectCommand = new RelayCommand(DetectAction);
+        }
+
+        private void DetectAction()
+        {
+            PausePreviewAsync();
+            StartRecognizing(_testWritableBitmap);
+           
+        }
+
+        /// <summary>
+        /// The <see cref="TestWritableBitmap" /> property's name.
+        /// </summary>
+        public const string TestWritableBitmapPropertyName = "TestWritableBitmap";
+
+        private WriteableBitmap _testWritableBitmap = null;
+
+        /// <summary>
+        /// Sets and gets the TestWritableBitmap property.
+        /// Changes to that property's value raise the PropertyChanged event. 
+        /// </summary>
+        public WriteableBitmap TestWritableBitmap
+        {
+            get
+            {
+                return _testWritableBitmap;
+            }
+
+            set
+            {
+                
+                _testWritableBitmap = value;
+                RaisePropertyChanged(TestWritableBitmapPropertyName);
+
+                
+                //StartRecognizing(_testWritableBitmap);
+
+            }
+        }
+
+
+        /// <summary>
+        /// The <see cref="DetectCommand" /> property's name.
+        /// </summary>
+        public const string DetectCommandPropertyName = "DetectCommand";
+
+        private RelayCommand _DetectCommand = null;
+
+        /// <summary>
+        /// Sets and gets the DetectCommand property.
+        /// Changes to that property's value raise the PropertyChanged event. 
+        /// </summary>
+        public RelayCommand DetectCommand
+        {
+            get
+            {
+                return _DetectCommand;
+            }
+
+            set
+            {
+                if (_DetectCommand == value)
+                {
+                    return;
+                }
+
+                _DetectCommand = value;
+                RaisePropertyChanged(DetectCommandPropertyName);
+            }
+        }
+        private void ShowMessage(string Message)
+        {
+            MessageDialog dialog = new MessageDialog(Message);
+            dialog.ShowAsync();
+        }
+
+        private void StartRecognizing(WriteableBitmap _testWritableBitmap)
+        {
+            try
+            {
+                System.Drawing.Bitmap bitmap = (System.Drawing.Bitmap)_testWritableBitmap;
+                
+                bitmap=bitmap.Clone(System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+                if (recognizer.resourceLoaded)
+                {
+                    var result = recognizer.Recognize(bitmap);
+                    ShowMessage(result.Count > 0 ? result.First().ToString() : "No Cards");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowMessage(ex.Message);
+               
+            }
         }
 
         /// <summary>
@@ -112,7 +210,11 @@ namespace WindowsPhoneCardRecognition.ViewModel
 
             // Create a camera preview image source (from Imaging SDK)
             _cameraPreviewImageSource = new CameraPreviewImageSource();
-            await _cameraPreviewImageSource.InitializeAsync(string.Empty);
+            
+            DeviceInformationCollection devices = await Windows.Devices.Enumeration.DeviceInformation.FindAllAsync(Windows.Devices.Enumeration.DeviceClass.VideoCapture);
+            String backCameraId = devices.FirstOrDefault(x => x.EnclosureLocation != null && x.EnclosureLocation.Panel == Windows.Devices.Enumeration.Panel.Back).Id;
+
+            await _cameraPreviewImageSource.InitializeAsync(backCameraId);
             var properties = await _cameraPreviewImageSource.StartPreviewAsync();
 
             // Create a preview bitmap with the correct aspect ratio
@@ -156,6 +258,7 @@ namespace WindowsPhoneCardRecognition.ViewModel
         private CardRecognizer recognizer = new CardRecognizer();
         private List<Card> cards = new List<Card>();
 
+        private object Mutex=new object();
 
         /// <summary>
         /// Render a frame with the selected filter
@@ -167,8 +270,10 @@ namespace WindowsPhoneCardRecognition.ViewModel
             {
                 _isRendering = true;
 
-                // User changed the filter, let's update it before rendering
+                
+                    // User changed the filter, let's update it before rendering
 
+                
 
                 // Render the image with the filter
                 await _writeableBitmapRenderer.RenderAsync();
@@ -176,29 +281,33 @@ namespace WindowsPhoneCardRecognition.ViewModel
                 await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High,
                     () =>
                         {
+                            
+
+                            TestWritableBitmap = _writeableBitmap;
                             Status = "Trying to do something .. ";
 
-                            System.Drawing.Bitmap temp = (System.Drawing.Bitmap)_writeableBitmap;
+                            //System.Drawing.Bitmap temp = (System.Drawing.Bitmap)_writeableBitmap;
 
-                            try
-                            {
-                                frameCounter++;
+                            //try
+                            //{
+                            //    frameCounter++;
 
-                                if(frameCounter>10)
-                                {
-                                    cards = recognizer.Recognize(temp);
-                                    frameCounter = 0;
-                                }
-                            }
-                            catch
-                            { }
+                            //    if(frameCounter>10)
+                            //    {
+                            //        cards = recognizer.Recognize(temp);
+                            //        frameCounter = 0;
+                            //    }
+                            //}
+                            //catch
+                            //{ }
 
                             _writeableBitmap.Invalidate();
+                            Status = "Done Something";
                         });
 
                 _isRendering = false;
 
-                Status = "Done Something";
+                
             }
         }
     }

@@ -16,6 +16,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
+                <ColumnDefinition></ColumnDefinition>
             </Grid.ColumnDefinitions>
 
             <TextBlock Text="Know Your Cards" Style="{StaticResource TitleTextBlockStyle}"
@@ -23,6 +24,9 @@
 
             <TextBlock Text="{Binding Status}" Style="{StaticResource TitleTextBlockStyle}"
                            Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        
+        
+            <Button Grid.Column="2" Command="{Binding DetectCommand}"></Button>
         </Grid>
     </Grid>
     

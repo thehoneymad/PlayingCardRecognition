@@ -26,10 +26,15 @@ namespace WindowsPhoneCardRecognition
         private Bitmap j, k, q; //Face Card Character Templates
         private Bitmap clubs, diamonds, spades, hearts; //Suit Templates
 
-        private bool resourceLoaded = false;
+        public bool resourceLoaded = false;
 
         private FiltersSequence commonSeq; //Commonly filter sequence to be used 
 
+        public async Task DoSomething(WriteableBitmap wbmp)
+        {
+            
+            
+        }
 
         /// <summary>
         /// Constructor
@@ -60,6 +65,15 @@ namespace WindowsPhoneCardRecognition
             diamonds = (Bitmap)(await LoadImage("ms-appx:///Templates/Diamonds.bmp"));
             spades = (Bitmap)(await LoadImage("ms-appx:///Templates/Spades.bmp"));
             hearts = (Bitmap)(await LoadImage("ms-appx:///Templates/Hearts.bmp"));
+
+            clubs = clubs.Clone(PixelFormat.Format24bppRgb);
+            diamonds = diamonds.Clone(PixelFormat.Format24bppRgb);
+            spades = spades.Clone(PixelFormat.Format24bppRgb);
+            hearts = hearts.Clone(PixelFormat.Format24bppRgb);
+
+            j = j.Clone(PixelFormat.Format24bppRgb);
+            k = k.Clone(PixelFormat.Format24bppRgb);
+            q = q.Clone(PixelFormat.Format24bppRgb);
 
             resourceLoaded = true;
         }
