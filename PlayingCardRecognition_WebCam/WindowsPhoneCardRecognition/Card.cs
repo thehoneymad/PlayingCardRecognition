@@ -1,11 +1,14 @@
-﻿using System;
-using System.Drawing;
-using AForge;
+﻿using AForge;
 using AForge.Imaging.Filters;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-using Point = System.Drawing.Point;
 
-namespace PlayingCardRecognition
+namespace WindowsPhoneCardRecognition
 {
     /// <summary>
     /// Rank enumeration
@@ -49,10 +52,10 @@ namespace PlayingCardRecognition
         private Rank rank; //Rank of card
         private Suit suit; //Suit of card
         private Bitmap image; //Extracted(transformed) image of card
-        private Point[] corners ;//Corner points of card on source image
+        private AForge.Point[] corners;//Corner points of card on source image
 
         //Properties
-        public Point[] Corners
+        public AForge.Point[] Corners
         {
             get { return this.corners; }
         }
@@ -71,13 +74,14 @@ namespace PlayingCardRecognition
         //Constructor
         public Card(Bitmap cardImg, IntPoint[] cornerIntPoints)
         {
+            //This has nothing to do with the rest of the framework, so it can be refactored
             this.image = cardImg;
 
             //Convert AForge.IntPoint Array to System.Drawing.Point Array
             int total = cornerIntPoints.Length;
-            corners = new Point[total]; 
+            corners = new AForge.Point[total];
 
-            for(int i = 0 ; i < total ; i++)
+            for (int i = 0; i < total; i++)
             {
                 this.corners[i].X = cornerIntPoints[i].X;
                 this.corners[i].Y = cornerIntPoints[i].Y;
@@ -91,12 +95,14 @@ namespace PlayingCardRecognition
         {
             if (image == null)
                 return null;
+            
             Crop crop = new Crop(new Rectangle(0, 0, 30, 84));
-
-
+            
+            
             Bitmap im2 = crop.Apply(image);
+            
             //im2.Save("cropped", System.Drawing.Imaging.ImageFormat.Jpeg);
-            return crop.Apply(image); 
+            return crop.Apply(image);
         }
         /// <summary>
         /// Overrided ToString Function.
@@ -104,8 +110,8 @@ namespace PlayingCardRecognition
         /// <returns></returns>
         public override string ToString()
         {
-            if (suit == PlayingCardRecognition.Suit.NOT_RECOGNIZED ||
-                rank == PlayingCardRecognition.Rank.NOT_RECOGNIZED)
+            if (suit == Suit.NOT_RECOGNIZED ||
+                rank == Rank.NOT_RECOGNIZED)
                 return string.Empty;
 
             string suitStr = string.Empty;
