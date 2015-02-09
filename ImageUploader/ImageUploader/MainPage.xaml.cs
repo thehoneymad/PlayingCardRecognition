@@ -18,6 +18,7 @@ namespace ImageUploader
     public partial class MainPage : PhoneApplicationPage
     {
         private MemoryStream photoStream;
+        private MemoryStream sendPhotoStream;
 
         private string fileName;
 
@@ -38,16 +39,28 @@ namespace ImageUploader
             //BuildLocalizedApplicationBar();
         }
 
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            var TitleProgressIndicator=new ProgressIndicator();
+            TitleProgressIndicator.Text="Know Your Cards";
+
+            SystemTray.SetProgressIndicator(this, TitleProgressIndicator);
+            SystemTray.ProgressIndicator.IsVisible = true;
+            base.OnNavigatedTo(e);
+
+        }
+
         private void OnPhotoChooserTaskCompleted(object sender, PhotoResult e)
-        {        
+        {
+            UploadButton.IsEnabled = false;
             // Make sure the PhotoChooserTask is resurning OK
 
             if (e.TaskResult == TaskResult.OK)
             {
-
                 // initialize the result photo stream
 
                 photoStream = new MemoryStream();
+                sendPhotoStream = new MemoryStream();
 
                 // Save the stream result (copying the resulting stream)
 
@@ -59,6 +72,15 @@ namespace ImageUploader
 
                 BitmapImage setImage = new BitmapImage();
                 setImage.SetSource(photoStream);
+
+                WriteableBitmap wb = new WriteableBitmap(setImage);
+                var resizeHeight=((double)setImage.PixelHeight / (double)setImage.PixelWidth * 640d);
+                wb=wb.Resize(640, (int)resizeHeight, WriteableBitmapExtensions.Interpolation.Bilinear);
+                wb.SaveJpeg(sendPhotoStream, wb.PixelWidth, wb.PixelHeight, 0, 100);
+
+                setImage.SetSource(sendPhotoStream);
+
+                
                 SelectedImage.Source = setImage;
 
                 // display the chosen picture
@@ -72,6 +94,8 @@ namespace ImageUploader
 
 
             }
+
+            UploadButton.IsEnabled = true;
         }
 
         private async void UploadFile()
@@ -79,9 +103,9 @@ namespace ImageUploader
             try
             {
 
-                if (photoStream != null)
+                if (sendPhotoStream != null)
                 {
-                    var fileUploadUrl = @"http://192.168.0.147:60662/api/file";
+                    var fileUploadUrl = @"http://10.211.10.190:60662/api/file";
 
                     var client = new HttpClient();
 
@@ -91,13 +115,13 @@ namespace ImageUploader
 
                     // sent will be 0
 
-                    photoStream.Position = 0;
+                    sendPhotoStream.Position = 0;
 
                     // This is the postdata
 
                     MultipartFormDataContent content = new MultipartFormDataContent();
 
-                    content.Add(new StreamContent(photoStream), "file", fileName);
+                    content.Add(new StreamContent(sendPhotoStream), "file", fileName);
 
                     // upload the file sending the form info and ensure a result.
 
@@ -125,23 +149,18 @@ namespace ImageUploader
                         });
 
                      var contentString= await data.Result.Content.ReadAsStringAsync();
-
-
-
                      MessageBox.Show(contentString);
 
                 }
-
-                // Disable the Upload button
 
             }
 
             catch
             {
                 MessageBox.Show("Upload Error");
+                
 
             }
-
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)

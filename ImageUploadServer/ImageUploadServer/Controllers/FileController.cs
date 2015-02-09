@@ -16,14 +16,8 @@ namespace ImageUploadServer.Controllers
 
         CardRecognizer recognizer = new CardRecognizer();
 
-        [HttpGet]
-        public IHttpActionResult GetData()
-        {
-            return Json("hello");
-        }
-
         [HttpPost]
-        public IHttpActionResult Index()
+        public IHttpActionResult UploadImage()
         {
             var fileUploaded = false;
 
